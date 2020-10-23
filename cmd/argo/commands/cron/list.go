@@ -22,6 +22,7 @@ import (
 type listFlags struct {
 	allNamespaces bool   // --all-namespaces
 	output        string // --output
+	labels        string // --selector
 }
 
 func NewListCommand() *cobra.Command {
@@ -39,7 +40,8 @@ func NewListCommand() *cobra.Command {
 				namespace = ""
 			}
 			listOpts := metav1.ListOptions{}
-			labelSelector := labels.NewSelector()
+			labelSelector, err := labels.Parse(listArgs.labels)
+			errors.CheckError(err)
 			listOpts.LabelSelector = labelSelector.String()
 			cronWfList, err := serviceClient.ListCronWorkflows(ctx, &cronworkflowpkg.ListCronWorkflowsRequest{
 				Namespace:   namespace,
@@ -60,6 +62,7 @@ func NewListCommand() *cobra.Command {
 	}
 	command.Flags().BoolVar(&listArgs.allNamespaces, "all-namespaces", false, "Show workflows from all namespaces")
 	command.Flags().StringVarP(&listArgs.output, "output", "o", "", "Output format. One of: wide|name")
+	command.Flags().StringVarP(&listArgs.labels, "selector", "l", "", "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	return command
 }
 
